@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP8266 Webpage</title>
+  <script>
+    function disconnect() {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          alert("Disconnected from ESP8266");
+          window.location.reload(); // Reload the page after disconnection
+        }
+      };
+      xhttp.open("GET", "/disconnect", true);
+      xhttp.send();
+    }
+
+    function uploadFirmware() {
+      var fileInput = document.getElementById("firmware");
+      var firmwareFile = fileInput.files[0];
+      if (firmwareFile) {
+        var formData = new FormData();
+        formData.append("firmware", firmwareFile);
+        
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+          if (this.readyState == 4 && this.status == 200) {
+            alert("Firmware uploaded successfully!");
+            window.location.reload(); // Reload the page after firmware upload
+          }
+        };
+        xhttp.open("POST", "/upload", true);
+        xhttp.send(formData);
+      } else {
+        alert("Please select a firmware file!");
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>Hi, this is your webpage!</h1>
+  <button onclick="disconnect()">Disconnect</button>
+
+  <h2>Upload Firmware</h2>
+  <form>
+    Select firmware file (.bin): <input type="file" id="firmware" name="firmware">
+    <button type="button" onclick="uploadFirmware()">Upload</button>
+  </form>
+</body>
+</html>
