@@ -359,8 +359,8 @@ void callback(char *topic, byte *payload, unsigned int length)
     // Print received firmware URL for debugging
     Serial.print("Received firmware URL: ");
     Serial.println(firmwareUrl);
-*/
     // Trigger OTA update using the received firmware URL
     handleOTAUpdate(firmwareUrl);
   }
 }
+*/
