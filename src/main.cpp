@@ -1,4 +1,126 @@
 #include <ESP8266WiFi.h>
+#include <PubSubClient.h>
+
+// WiFi Access Point configuration
+#define WIFI_AP_SSID "ESP8266_AP"
+#define WIFI_AP_PASSWORD "password"
+#define WIFI_AP_CHANNEL 1
+#define WIFI_AP_SSID_HIDDEN false
+#define WIFI_AP_MAX_CONNECTIONS 5
+#define WIFI_AP_BEACON_INTERVAL 100
+#define WIFI_AP_IP IPAddress(192, 168, 0, 1)
+#define WIFI_AP_GATEWAY IPAddress(192, 168, 0, 1)
+#define WIFI_AP_NETMASK IPAddress(255, 255, 255, 0)
+
+// MQTT Broker configuration
+const char *mqttServer = "act5i3l7e20lx-ats.iot.us-east-1.amazonaws.com";
+const int mqttPort = 8883;
+const char *mqttClientId = "ESP8266_Client";
+const char *mqttTopic = "ota/firmware";
+
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+
+// Function prototypes
+void connectToWiFi();
+void reconnectMQTT();
+void callback(char *topic, byte *payload, unsigned int length);
+
+void setup()
+{
+  Serial.begin(115200);
+
+  connectToWiFi();
+  mqttClient.setServer(mqttServer, mqttPort);
+  mqttClient.setCallback(callback);
+}
+
+void loop()
+{
+  if (!mqttClient.connected())
+  {
+    reconnectMQTT();
+  }
+  mqttClient.loop();
+
+  // Your main code goes here (if any)
+}
+
+void connectToWiFi()
+{
+  Serial.println("Connecting to WiFi...");
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(WIFI_AP_SSID, WIFI_AP_PASSWORD, WIFI_AP_CHANNEL, WIFI_AP_SSID_HIDDEN, WIFI_AP_MAX_CONNECTIONS);
+  WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_GATEWAY, WIFI_AP_NETMASK);
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+
+  Serial.println("Connected to WiFi");
+}
+
+void reconnectMQTT()
+{
+  // Loop until we're reconnected
+  while (!mqttClient.connected())
+  {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    if (mqttClient.connect(mqttClientId))
+    {
+      Serial.println("connected");
+
+      // Once connected, subscribe to topics
+      mqttClient.subscribe(mqttTopic);
+    }
+    else
+    {
+      Serial.print("failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
+void callback(char *topic, byte *payload, unsigned int length)
+{
+  // Convert payload to a String
+  String message;
+  for (unsigned int i = 0; i < length; i++)
+  {
+    message += (char)payload[i];
+  }
+
+  // Check if the topic is for OTA update
+  if (strcmp(topic, mqttTopic) == 0)
+  {
+    // Extract firmware update URL from the message
+    String firmwareUrl = message;
+
+    // Print received firmware URL for debugging
+    Serial.print("Received firmware URL: ");
+    Serial.println(firmwareUrl);
+
+    // Implement firmware update handling here
+    // handleOTAUpdate(firmwareUrl);
+  }
+}
+
+
+
+
+
+
+
+
+
+/*
+#include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <FS.h>
 #include <PubSubClient.h>
@@ -237,7 +359,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     // Print received firmware URL for debugging
     Serial.print("Received firmware URL: ");
     Serial.println(firmwareUrl);
-
+*/
     // Trigger OTA update using the received firmware URL
     handleOTAUpdate(firmwareUrl);
   }
